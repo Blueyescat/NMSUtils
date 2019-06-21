@@ -48,7 +48,7 @@ public final class NMSUtils {
 	private static void internalRespawn(Player player) {
 		try {
 			Class<?> PacketPlayInClientCommand = getNMSClass("PacketPlayInClientCommand");
-			Class<?> EnumClientCommand = getNMSClass("EnumClientCommand");
+			Class<?> EnumClientCommand = getNMSClass("PacketPlayInClientCommand$EnumClientCommand");
 			Constructor<?> constructor = PacketPlayInClientCommand.getDeclaredConstructor(EnumClientCommand);
 			Object selectedObj = null;
 			for (Object obj : EnumClientCommand.getEnumConstants()) {
@@ -62,7 +62,7 @@ public final class NMSUtils {
 			Object connection = handler.getClass().getField("playerConnection").get(handler);
 			connection.getClass().getMethod("a", PacketPlayInClientCommand).invoke(connection, packet);
 		} catch (Throwable t) {
-			
+			t.printStackTrace();
 		}
 	}
 	
@@ -71,16 +71,16 @@ public final class NMSUtils {
 			
 			@Override
 			public void run() {
-				/*if (IS_SPIGOT_SERVER) {
+				if (IS_SPIGOT_SERVER) {
 					try {
 						player.spigot().respawn();
 					} catch (Throwable t) {
 						internalRespawn(player);
 					}
-				} else {*/
+				} else {
 					internalRespawn(player);
-				//}
+				}
 			}
-		}.runTaskLater(instance, 20L);
+		}.runTaskLater(instance, delay);
 	}
 }
