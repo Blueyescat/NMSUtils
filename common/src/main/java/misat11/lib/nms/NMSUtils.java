@@ -3,6 +3,7 @@ package misat11.lib.nms;
 import java.lang.reflect.Constructor;
 
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -63,6 +64,21 @@ public final class NMSUtils {
 			connection.getClass().getMethod("a", PacketPlayInClientCommand).invoke(connection, packet);
 		} catch (Throwable t) {
 			t.printStackTrace();
+		}
+	}
+	
+	public static void disableEntityAI(Entity entity) {
+		try {
+			Class<?> NBTTagCompound = getNMSClass("NBTTagCompound"); 
+			Object handler = entity.getClass().getMethod("getHandle").invoke(entity);
+			Object tag = handler.getClass().getMethod("getNBTTag").invoke(handler);
+			if (tag == null) {
+				tag = NBTTagCompound.getConstructor().newInstance();
+			}
+			handler.getClass().getMethod("c", NBTTagCompound).invoke(handler, tag);
+			NBTTagCompound.getMethod("setInt", String.class, int.class).invoke(tag, "NoAI", 1);
+			handler.getClass().getMethod("f", NBTTagCompound).invoke(handler, tag);
+		} catch (Throwable t) {
 		}
 	}
 	
