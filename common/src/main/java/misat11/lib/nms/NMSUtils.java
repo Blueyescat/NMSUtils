@@ -3,7 +3,7 @@ package misat11.lib.nms;
 import java.lang.reflect.Constructor;
 
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -67,7 +67,7 @@ public final class NMSUtils {
 		}
 	}
 	
-	public static void disableEntityAI(Entity entity) {
+	public static void disableEntityAI(LivingEntity entity) {
 		try {
 			Class<?> NBTTagCompound = getNMSClass("NBTTagCompound"); 
 			Object handler = entity.getClass().getMethod("getHandle").invoke(entity);
