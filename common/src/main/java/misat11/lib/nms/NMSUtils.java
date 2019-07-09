@@ -9,21 +9,20 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
 public final class NMSUtils {
-	
+
 	public static final boolean NMS_BASED_SERVER, IS_SPIGOT_SERVER;
 	public static final String NMS_VERSION;
-	
+
 	static {
 		boolean isNMS, isSpigot;
 		String nmsVersion = "";
-		
+
 		try {
 			Class.forName("org.bukkit.craftbukkit.Main");
 			isNMS = true;
 		} catch (ClassNotFoundException e) {
 			isNMS = false;
 		}
-		
 
 		if (isNMS) {
 			String packName = Bukkit.getServer().getClass().getPackage().getName();
@@ -36,16 +35,16 @@ public final class NMSUtils {
 		} catch (Exception e) {
 			isSpigot = false;
 		}
-		
+
 		NMS_BASED_SERVER = isNMS;
 		IS_SPIGOT_SERVER = isSpigot;
 		NMS_VERSION = nmsVersion;
 	}
-	
+
 	private static Class<?> getNMSClass(String clazz) throws ClassNotFoundException {
 		return Class.forName("net.minecraft.server." + NMS_VERSION + "." + clazz);
 	}
-	
+
 	private static void internalRespawn(Player player) {
 		try {
 			Class<?> PacketPlayInClientCommand = getNMSClass("PacketPlayInClientCommand");
@@ -66,10 +65,10 @@ public final class NMSUtils {
 			t.printStackTrace();
 		}
 	}
-	
+
 	public static void disableEntityAI(LivingEntity entity) {
 		try {
-			Class<?> NBTTagCompound = getNMSClass("NBTTagCompound"); 
+			Class<?> NBTTagCompound = getNMSClass("NBTTagCompound");
 			Object handler = entity.getClass().getMethod("getHandle").invoke(entity);
 			Object tag = handler.getClass().getMethod("getNBTTag").invoke(handler);
 			if (tag == null) {
@@ -81,10 +80,24 @@ public final class NMSUtils {
 		} catch (Throwable t) {
 		}
 	}
-	
+
+	public static void fakeExp(Player player, float percentage) {
+		try {
+			Class<?> PacketPlayOutExperience = getNMSClass("PacketPlayOutExperience");
+			Class<?> Packet = getNMSClass("Packet");
+			Object handler = player.getClass().getMethod("getHandle").invoke(player);
+			Object playerConnection = handler.getClass().getField("playerConnection").get(handler);
+			Object packet = PacketPlayOutExperience.getConstructor(float.class, int.class, int.class)
+					.newInstance(percentage, player.getTotalExperience(), player.getLevel());
+			playerConnection.getClass().getMethod("sendPacket", Packet).invoke(playerConnection, packet);
+		} catch (Throwable t) {
+
+		}
+	}
+
 	public static void respawn(Plugin instance, Player player, long delay) {
 		new BukkitRunnable() {
-			
+
 			@Override
 			public void run() {
 				if (IS_SPIGOT_SERVER) {

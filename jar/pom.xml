@@ -8,6 +8,7 @@
 		<version>1</version>
 	</parent>
 	<artifactId>NMSUtils</artifactId>
+	<version>1.0.1</version>
 
 	<dependencies>
 		<dependency>
