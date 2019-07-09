@@ -81,14 +81,14 @@ public final class NMSUtils {
 		}
 	}
 
-	public static void fakeExp(Player player, float percentage) {
+	public static void fakeExp(Player player, float percentage, int levels) {
 		try {
 			Class<?> PacketPlayOutExperience = getNMSClass("PacketPlayOutExperience");
 			Class<?> Packet = getNMSClass("Packet");
 			Object handler = player.getClass().getMethod("getHandle").invoke(player);
 			Object playerConnection = handler.getClass().getField("playerConnection").get(handler);
 			Object packet = PacketPlayOutExperience.getConstructor(float.class, int.class, int.class)
-					.newInstance(percentage, player.getTotalExperience(), player.getLevel());
+					.newInstance(percentage, player.getTotalExperience(), levels);
 			playerConnection.getClass().getMethod("sendPacket", Packet).invoke(playerConnection, packet);
 		} catch (Throwable t) {
 
