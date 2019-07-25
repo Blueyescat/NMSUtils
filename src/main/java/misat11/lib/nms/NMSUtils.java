@@ -123,7 +123,7 @@ public final class NMSUtils {
 			Class<?> PacketPlayOutWorldParticles = getNMSClass("PacketPlayOutWorldParticles");
 			Object selectedParticle = null;
 			for (Object obj : EnumParticle.getEnumConstants()) {
-				if (particleName.equals(obj.getClass().getMethod("b").invoke(obj))) {
+				if (particleName.equalsIgnoreCase((String) obj.getClass().getMethod("b").invoke(obj))) {
 					selectedParticle = obj;
 					break;
 				}
