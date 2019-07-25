@@ -2,8 +2,12 @@ package misat11.lib.nms;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.List;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.Particle;
 import org.bukkit.World;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
@@ -44,7 +48,7 @@ public final class NMSUtils {
 		NMS_VERSION = nmsVersion;
 	}
 
-	private static Class<?> getNMSClass(String clazz) throws ClassNotFoundException {
+	public static Class<?> getNMSClass(String clazz) throws ClassNotFoundException {
 		return Class.forName("net.minecraft.server." + NMS_VERSION + "." + clazz);
 	}
 
@@ -98,7 +102,106 @@ public final class NMSUtils {
 		}
 	}
 
-	public static void changeTNTSheepAI(Mob mob, double speed, double follow) {
+	public static void sendParticles(List<Player> viewers, String particleName, Location loc, int count, double offsetX,
+			double offsetY, double offsetZ, double extra) {
+		for (Player player : viewers) {
+			try {
+				player.spawnParticle(Particle.valueOf(particleName.toUpperCase()), loc.getX(), loc.getY(), loc.getZ(),
+						count, offsetX, offsetY, offsetZ, extra);
+			} catch (Throwable t) {
+				sendParticlesInternal(player, particleName.toUpperCase(), (float) loc.getX(), (float) loc.getY(),
+						(float) loc.getZ(), count, (float) offsetX, (float) offsetY, (float) offsetZ, (float) extra);
+			}
+		}
+	}
+
+	private static void sendParticlesInternal(Player player, String particleName, float x, float y, float z, int count,
+			float offsetX, float offsetY, float offsetZ, float extra) {
+		try {
+			Class<?> EnumParticle = getNMSClass("EnumParticle");
+			Class<?> Packet = getNMSClass("Packet");
+			Class<?> PacketPlayOutWorldParticles = getNMSClass("PacketPlayOutWorldParticles");
+			Object selectedParticle = null;
+			for (Object obj : EnumParticle.getEnumConstants()) {
+				if (particleName.equals(obj.getClass().getMethod("b").invoke(obj))) {
+					selectedParticle = obj;
+					break;
+				}
+			}
+			Object packet = PacketPlayOutWorldParticles
+					.getConstructor(EnumParticle, boolean.class, float.class, float.class, float.class, float.class,
+							float.class, float.class, float.class, int.class, int[].class)
+					.newInstance(selectedParticle, true, x, y, z, offsetX, offsetY, offsetZ, extra, count,
+							new int[] {});
+			Object handler = player.getClass().getMethod("getHandle").invoke(player);
+			Object playerConnection = handler.getClass().getField("playerConnection").get(handler);
+			playerConnection.getClass().getMethod("sendPacket", Packet).invoke(playerConnection, packet);
+		} catch (Throwable t) {
+
+		}
+	}
+
+	public static void sendTitle(Player player, String title, String subtitle, int fadeIn, int stay, int fadeOut) {
+		try {
+			player.sendTitle(title, subtitle, fadeIn, stay, fadeOut);
+		} catch (Throwable t) {
+			internalSendTitle(player, title, subtitle, fadeIn, stay, fadeOut);
+		}
+	}
+
+	private static void internalSendTitle(Player player, String title, String subtitle, int fadeIn, int stay,
+			int fadeOut) {
+		try {
+			Class<?> PacketPlayOutTitle = getNMSClass("PacketPlayOutTitle");
+			Class<?> IChatBaseComponent = getNMSClass("IChatBaseComponent");
+			Class<?> Packet = getNMSClass("Packet");
+			Class<?> ChatSerializer;
+			Class<?> EnumTitleAction;
+			try {
+				ChatSerializer = getNMSClass("IChatBaseComponent$ChatSerializer");
+			} catch (ClassNotFoundException exception) {
+				ChatSerializer = getNMSClass("ChatSerializer");
+			}
+			try {
+				EnumTitleAction = getNMSClass("PacketPlayOutTitle$EnumTitleAction");
+			} catch (ClassNotFoundException exception) {
+				EnumTitleAction = getNMSClass("EnumTitleAction");
+			}
+			Object titleComponent = ChatSerializer.getMethod("a", String.class).invoke(null,
+					"{\"text\": \"" + title + "\"}");
+			Object subtitleComponent = ChatSerializer.getMethod("a", String.class).invoke(null,
+					"{\"text\": \"" + subtitle + "\"}");
+			Object handler = player.getClass().getMethod("getHandle").invoke(player);
+			Object connection = handler.getClass().getField("playerConnection").get(handler);
+			Object TITLE = null;
+			Object SUBTITLE = null;
+			Object TIMES = null;
+			for (Object obj : EnumTitleAction.getEnumConstants()) {
+				if ("TITLE".equals(obj.getClass().getMethod("name").invoke(obj))) {
+					TITLE = obj;
+				} else if ("SUBTITLE".equals(obj.getClass().getMethod("name").invoke(obj))) {
+					SUBTITLE = obj;
+				} else if ("TIMES".equals(obj.getClass().getMethod("name").invoke(obj))) {
+					TIMES = obj;
+				}
+			}
+			Object titlePacket = PacketPlayOutTitle.getConstructor(EnumTitleAction, IChatBaseComponent)
+					.newInstance(TITLE, titleComponent);
+			Object subtitlePacket = PacketPlayOutTitle.getConstructor(EnumTitleAction, IChatBaseComponent)
+					.newInstance(SUBTITLE, subtitleComponent);
+			Object timesPacket = PacketPlayOutTitle
+					.getConstructor(EnumTitleAction, IChatBaseComponent, int.class, int.class, int.class)
+					.newInstance(TIMES, null, fadeIn, stay, fadeOut);
+			Method sendPacket = connection.getClass().getClass().getMethod("sendPacket", Packet);
+			sendPacket.invoke(connection, titlePacket);
+			sendPacket.invoke(connection, subtitlePacket);
+			sendPacket.invoke(connection, timesPacket);
+		} catch (Throwable t) {
+
+		}
+	}
+
+	public static void makeMobAttackTarget(Mob mob, double speed, double follow, double attackDamage) {
 		try {
 			Class<?> PathfinderGoalSelector = getNMSClass("PathfinderGoalSelector");
 			Class<?> PathfinderGoalMeleeAttack = getNMSClass("PathfinderGoalMeleeAttack");
@@ -125,9 +228,8 @@ public final class NMSUtils {
 					FOLLOW_RANGE);
 			followO.getClass().getMethod("setValue", double.class).invoke(followO, follow);
 			Object attrMap = handler.getClass().getMethod("getAttributeMap").invoke(handler);
-			Object attackO = attrMap.getClass().getMethod("b", IAttribute).invoke(attrMap,
-					ATTACK_DAMAGE);
-			attackO.getClass().getMethod("setValue", double.class).invoke(attackO, 0);
+			Object attackO = attrMap.getClass().getMethod("b", IAttribute).invoke(attrMap, ATTACK_DAMAGE);
+			attackO.getClass().getMethod("setValue", double.class).invoke(attackO, attackDamage);
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}
