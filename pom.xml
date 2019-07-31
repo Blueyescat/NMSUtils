@@ -5,7 +5,7 @@
 	<groupId>misat11.lib.nms</groupId>
 	<artifactId>NMSUtils</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0.4</version>
+	<version>1.0.5</version>
 
 	<repositories>
 		<repository>

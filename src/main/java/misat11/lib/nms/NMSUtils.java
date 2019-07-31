@@ -9,6 +9,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.World;
+import org.bukkit.entity.Creature;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
@@ -201,7 +202,7 @@ public final class NMSUtils {
 		}
 	}
 
-	public static void makeMobAttackTarget(Mob mob, double speed, double follow, double attackDamage) {
+	public static void makeMobAttackTarget(Creature mob, double speed, double follow, double attackDamage) {
 		try {
 			Class<?> PathfinderGoalSelector = getNMSClass("PathfinderGoalSelector");
 			Class<?> PathfinderGoalMeleeAttack = getNMSClass("PathfinderGoalMeleeAttack");
